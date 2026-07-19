@@ -1,0 +1,60 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  ASSET_MANAGER
+  EMPLOYEE
+}
+
+model User {
+  id                  String            @id @default(uuid())
+  email               String            @unique
+  username            String            @unique
+  password            String
+  name                String
+  role                Role              @default(EMPLOYEE)
+  departmentId        String?
+  department          Department?       @relation("UserDept", fields: [departmentId], references: [id])
+  managedDepartments  Department[]      @relation("DeptManager")
+  roleChanges         RoleChangeLog[]   @relation("RoleChangeUser")
+  executedRoleChanges RoleChangeLog[]   @relation("RoleChangeExecutor")
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+model Department {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  isActive  Boolean      @default(true)
+  parentId  String?
+  parent    Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
+  children  Department[] @relation("DeptHierarchy")
+  managerId String?
+  manager   User?        @relation("DeptManager", fields: [managerId], references: [id])
+  users     User[]       @relation("UserDept")
+}
+
+model Category {
+  id             String   @id @default(uuid())
+  name           String   @unique
+  isActive       Boolean  @default(true)
+  warrantyPeriod Int?     // In months
+}
+
+model RoleChangeLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation("RoleChangeUser", fields: [userId], references: [id])
+  oldRole     Role
+  newRole     Role
+  changedById String
+  changedBy   User     @relation("RoleChangeExecutor", fields: [changedById], references: [id])
+  createdAt   DateTime @default(now())
+}
