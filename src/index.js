@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.routes.js';
 import departmentRoutes from './routes/department.routes.js';
 import categoryRoutes from './routes/category.routes.js';
 import employeeRoutes from './routes/employee.routes.js';
+import assetRoutes from './routes/asset.routes.js';
 import prisma from './config/conn.js';
 
 // Load environment variables
@@ -22,6 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/assets', assetRoutes);
 
 // Base route
 app.get('/', (req, res) => {

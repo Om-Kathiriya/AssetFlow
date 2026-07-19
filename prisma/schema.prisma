@@ -13,6 +13,16 @@ enum Role {
   EMPLOYEE
 }
 
+enum AssetStatus {
+  AVAILABLE
+  ALLOCATED
+  RESERVED
+  UNDER_MAINTENANCE
+  LOST
+  RETIRED
+  DISPOSED
+}
+
 model User {
   id                  String            @id @default(uuid())
   email               String            @unique
@@ -25,6 +35,7 @@ model User {
   managedDepartments  Department[]      @relation("DeptManager")
   roleChanges         RoleChangeLog[]   @relation("RoleChangeUser")
   executedRoleChanges RoleChangeLog[]   @relation("RoleChangeExecutor")
+  assetHistory        AssetHistory[]
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 }
@@ -39,6 +50,7 @@ model Department {
   managerId String?
   manager   User?        @relation("DeptManager", fields: [managerId], references: [id])
   users     User[]       @relation("UserDept")
+  assets    Asset[]
 }
 
 model Category {
@@ -46,6 +58,7 @@ model Category {
   name           String   @unique
   isActive       Boolean  @default(true)
   warrantyPeriod Int?     // In months
+  assets         Asset[]
 }
 
 model RoleChangeLog {
@@ -57,4 +70,36 @@ model RoleChangeLog {
   changedById String
   changedBy   User     @relation("RoleChangeExecutor", fields: [changedById], references: [id])
   createdAt   DateTime @default(now())
+}
+
+model Asset {
+  id           String         @id @default(uuid())
+  assetTag     String         @unique
+  name         String
+  serialNumber String         @unique
+  status       AssetStatus    @default(AVAILABLE)
+  categoryId   String
+  category     Category       @relation(fields: [categoryId], references: [id])
+  departmentId String?
+  department   Department?    @relation(fields: [departmentId], references: [id])
+  location     String
+  purchaseDate DateTime?
+  cost         Float?
+  notes        String?
+  history      AssetHistory[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model AssetHistory {
+  id          String       @id @default(uuid())
+  assetId     String
+  asset       Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  action      String       // e.g. "REGISTER", "STATUS_CHANGE", "UPDATE"
+  oldStatus   AssetStatus?
+  newStatus   AssetStatus
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  notes       String?
+  createdAt   DateTime     @default(now())
 }
