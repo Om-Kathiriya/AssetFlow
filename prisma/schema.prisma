@@ -51,27 +51,42 @@ enum MaintenanceStatus {
   RESOLVED
 }
 
+enum AuditSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum VerificationResult {
+  PENDING
+  VERIFIED
+  MISSING
+  DISCREPANCY
+}
+
 model User {
-  id                  String               @id @default(uuid())
-  email               String               @unique
-  username            String               @unique
-  password            String
-  name                String
-  role                Role                 @default(EMPLOYEE)
-  departmentId        String?
-  department          Department?          @relation("UserDept", fields: [departmentId], references: [id])
-  managedDepartments  Department[]         @relation("DeptManager")
-  roleChanges         RoleChangeLog[]      @relation("RoleChangeUser")
-  executedRoleChanges RoleChangeLog[]      @relation("RoleChangeExecutor")
-  assetHistory        AssetHistory[]
-  allocations         Allocation[]
-  sentTransfers       TransferRequest[]    @relation("Sender")
-  receivedTransfers   TransferRequest[]    @relation("Receiver")
-  bookings            Booking[]
-  reportedMaintenance MaintenanceRequest[] @relation("MaintenanceReporter")
-  assignedMaintenance MaintenanceRequest[] @relation("MaintenanceTechnician")
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  id                    String                 @id @default(uuid())
+  email                 String                 @unique
+  username              String                 @unique
+  password              String
+  name                  String
+  role                  Role                   @default(EMPLOYEE)
+  departmentId          String?
+  department            Department?            @relation("UserDept", fields: [departmentId], references: [id])
+  managedDepartments    Department[]           @relation("DeptManager")
+  roleChanges           RoleChangeLog[]        @relation("RoleChangeUser")
+  executedRoleChanges   RoleChangeLog[]        @relation("RoleChangeExecutor")
+  assetHistory          AssetHistory[]
+  allocations           Allocation[]
+  sentTransfers         TransferRequest[]      @relation("Sender")
+  receivedTransfers     TransferRequest[]      @relation("Receiver")
+  bookings              Booking[]
+  reportedMaintenance   MaintenanceRequest[]   @relation("MaintenanceReporter")
+  assignedMaintenance   MaintenanceRequest[]   @relation("MaintenanceTechnician")
+  systemAuditLogs       AuditLog[]
+  createdAuditSessions  PhysicalAuditSession[]
+  verifiedAuditItems    AuditVerificationItem[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model Department {
@@ -107,27 +122,28 @@ model RoleChangeLog {
 }
 
 model Asset {
-  id                  String               @id @default(uuid())
-  assetTag            String               @unique
-  name                String
-  serialNumber        String               @unique
-  status              AssetStatus          @default(AVAILABLE)
-  categoryId          String
-  category            Category             @relation(fields: [categoryId], references: [id])
-  departmentId        String?
-  department          Department?          @relation(fields: [departmentId], references: [id])
-  location            String
-  purchaseDate        DateTime?
-  cost                Float?
-  notes               String?
-  isBookable          Boolean              @default(false)
-  history             AssetHistory[]
-  allocations         Allocation[]
-  transfers           TransferRequest[]
-  bookings            Booking[]
-  maintenanceRequests MaintenanceRequest[]
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  id                     String                  @id @default(uuid())
+  assetTag               String                  @unique
+  name                   String
+  serialNumber           String                  @unique
+  status                 AssetStatus             @default(AVAILABLE)
+  categoryId             String
+  category               Category                @relation(fields: [categoryId], references: [id])
+  departmentId           String?
+  department             Department?             @relation(fields: [departmentId], references: [id])
+  location               String
+  purchaseDate           DateTime?
+  cost                   Float?
+  notes                  String?
+  isBookable             Boolean                 @default(false)
+  history                AssetHistory[]
+  allocations            Allocation[]
+  transfers              TransferRequest[]
+  bookings               Booking[]
+  maintenanceRequests    MaintenanceRequest[]
+  auditVerificationItems AuditVerificationItem[]
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
 }
 
 model AssetHistory {
@@ -200,4 +216,42 @@ model MaintenanceRequest {
   resolutionNotes String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorId      String
+  actor        User     @relation(fields: [actorId], references: [id])
+  action       String   // e.g. "CREATE_ASSET", "ROLE_CHANGE", "DELETE_DEPARTMENT"
+  targetEntity String   // e.g. "Asset", "User", "Department"
+  targetId     String?
+  details      String?  // JSON diff or descriptive notes
+  createdAt    DateTime @default(now())
+}
+
+model PhysicalAuditSession {
+  id          String                  @id @default(uuid())
+  sessionName String
+  location    String?
+  status      AuditSessionStatus      @default(IN_PROGRESS)
+  createdById String
+  createdBy   User                    @relation(fields: [createdById], references: [id])
+  items       AuditVerificationItem[]
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+}
+
+model AuditVerificationItem {
+  id           String               @id @default(uuid())
+  sessionId    String
+  session      PhysicalAuditSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  assetId      String
+  asset        Asset                @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  result       VerificationResult   @default(PENDING)
+  notes        String?
+  verifiedById String?
+  verifiedBy   User?                @relation(fields: [verifiedById], references: [id])
+  verifiedAt   DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 }
