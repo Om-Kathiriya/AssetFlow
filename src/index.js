@@ -8,6 +8,7 @@ import employeeRoutes from './routes/employee.routes.js';
 import assetRoutes from './routes/asset.routes.js';
 import allocationRoutes from './routes/allocation.routes.js';
 import transferRoutes from './routes/transfer.routes.js';
+import bookingRoutes from './routes/booking.routes.js';
 import prisma from './config/conn.js';
 
 // Load environment variables
@@ -28,6 +29,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/allocations', allocationRoutes);
 app.use('/api/transfers', transferRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // Base route
 app.get('/', (req, res) => {

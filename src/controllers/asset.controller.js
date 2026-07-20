@@ -29,7 +29,8 @@ export const registerAsset = async (req, res) => {
       location,
       purchaseDate,
       cost,
-      notes
+      notes,
+      isBookable
     } = req.body;
 
     if (!name || !serialNumber || !categoryId || !location) {
@@ -95,6 +96,7 @@ export const registerAsset = async (req, res) => {
           purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
           cost: cost ? parseFloat(cost) : null,
           notes: notes || null,
+          isBookable: isBookable !== undefined ? Boolean(isBookable) : false,
           status: 'AVAILABLE'
         },
         include: {
@@ -213,7 +215,8 @@ export const updateAsset = async (req, res) => {
       location,
       purchaseDate,
       cost,
-      notes
+      notes,
+      isBookable
     } = req.body;
 
     const asset = await prisma.asset.findUnique({
@@ -254,7 +257,8 @@ export const updateAsset = async (req, res) => {
           location: location !== undefined ? location : asset.location,
           purchaseDate: purchaseDate !== undefined ? (purchaseDate ? new Date(purchaseDate) : null) : asset.purchaseDate,
           cost: cost !== undefined ? (cost ? parseFloat(cost) : null) : asset.cost,
-          notes: notes !== undefined ? notes : asset.notes
+          notes: notes !== undefined ? notes : asset.notes,
+          isBookable: isBookable !== undefined ? Boolean(isBookable) : asset.isBookable
         },
         include: {
           category: { select: { id: true, name: true } },

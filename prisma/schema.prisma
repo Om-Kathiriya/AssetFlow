@@ -35,6 +35,13 @@ enum TransferStatus {
   REJECTED
 }
 
+enum BookingStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id                  String            @id @default(uuid())
   email               String            @unique
@@ -51,6 +58,7 @@ model User {
   allocations         Allocation[]
   sentTransfers       TransferRequest[] @relation("Sender")
   receivedTransfers   TransferRequest[] @relation("Receiver")
+  bookings            Booking[]
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 }
@@ -101,9 +109,11 @@ model Asset {
   purchaseDate DateTime?
   cost         Float?
   notes        String?
+  isBookable   Boolean           @default(false)
   history      AssetHistory[]
   allocations  Allocation[]
   transfers    TransferRequest[]
+  bookings     Booking[]
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 }
@@ -149,4 +159,17 @@ model TransferRequest {
   notes      String?
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
+}
+
+model Booking {
+  id        String        @id @default(uuid())
+  assetId   String
+  asset     Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  startTime DateTime
+  endTime   DateTime
+  status    BookingStatus @default(UPCOMING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
