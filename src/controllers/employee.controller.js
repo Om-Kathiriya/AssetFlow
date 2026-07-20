@@ -39,7 +39,7 @@ export const promoteEmployeeRole = async (req, res) => {
       return res.status(400).json({ error: 'Role is required' });
     }
 
-    const validRoles = ['ADMIN', 'ASSET_MANAGER', 'EMPLOYEE'];
+    const validRoles = ['ADMIN', 'ASSET_MANAGER', 'EMPLOYEE', 'TECHNICIAN'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ error: `Invalid role. Allowed roles are: ${validRoles.join(', ')}` });
     }

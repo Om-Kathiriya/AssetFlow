@@ -11,6 +11,7 @@ enum Role {
   ADMIN
   ASSET_MANAGER
   EMPLOYEE
+  TECHNICIAN
 }
 
 enum AssetStatus {
@@ -42,25 +43,35 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum MaintenanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IN_PROGRESS
+  RESOLVED
+}
+
 model User {
-  id                  String            @id @default(uuid())
-  email               String            @unique
-  username            String            @unique
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  username            String               @unique
   password            String
   name                String
-  role                Role              @default(EMPLOYEE)
+  role                Role                 @default(EMPLOYEE)
   departmentId        String?
-  department          Department?       @relation("UserDept", fields: [departmentId], references: [id])
-  managedDepartments  Department[]      @relation("DeptManager")
-  roleChanges         RoleChangeLog[]   @relation("RoleChangeUser")
-  executedRoleChanges RoleChangeLog[]   @relation("RoleChangeExecutor")
+  department          Department?          @relation("UserDept", fields: [departmentId], references: [id])
+  managedDepartments  Department[]         @relation("DeptManager")
+  roleChanges         RoleChangeLog[]      @relation("RoleChangeUser")
+  executedRoleChanges RoleChangeLog[]      @relation("RoleChangeExecutor")
   assetHistory        AssetHistory[]
   allocations         Allocation[]
-  sentTransfers       TransferRequest[] @relation("Sender")
-  receivedTransfers   TransferRequest[] @relation("Receiver")
+  sentTransfers       TransferRequest[]    @relation("Sender")
+  receivedTransfers   TransferRequest[]    @relation("Receiver")
   bookings            Booking[]
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  reportedMaintenance MaintenanceRequest[] @relation("MaintenanceReporter")
+  assignedMaintenance MaintenanceRequest[] @relation("MaintenanceTechnician")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model Department {
@@ -96,26 +107,27 @@ model RoleChangeLog {
 }
 
 model Asset {
-  id           String            @id @default(uuid())
-  assetTag     String            @unique
-  name         String
-  serialNumber String            @unique
-  status       AssetStatus       @default(AVAILABLE)
-  categoryId   String
-  category     Category          @relation(fields: [categoryId], references: [id])
-  departmentId String?
-  department   Department?       @relation(fields: [departmentId], references: [id])
-  location     String
-  purchaseDate DateTime?
-  cost         Float?
-  notes        String?
-  isBookable   Boolean           @default(false)
-  history      AssetHistory[]
-  allocations  Allocation[]
-  transfers    TransferRequest[]
-  bookings     Booking[]
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id                  String               @id @default(uuid())
+  assetTag            String               @unique
+  name                String
+  serialNumber        String               @unique
+  status              AssetStatus          @default(AVAILABLE)
+  categoryId          String
+  category            Category             @relation(fields: [categoryId], references: [id])
+  departmentId        String?
+  department          Department?          @relation(fields: [departmentId], references: [id])
+  location            String
+  purchaseDate        DateTime?
+  cost                Float?
+  notes               String?
+  isBookable          Boolean              @default(false)
+  history             AssetHistory[]
+  allocations         Allocation[]
+  transfers           TransferRequest[]
+  bookings            Booking[]
+  maintenanceRequests MaintenanceRequest[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model AssetHistory {
@@ -172,4 +184,20 @@ model Booking {
   status    BookingStatus @default(UPCOMING)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+}
+
+model MaintenanceRequest {
+  id               String            @id @default(uuid())
+  assetId          String
+  asset            Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  reporterId       String
+  reporter         User              @relation("MaintenanceReporter", fields: [reporterId], references: [id])
+  technicianId     String?
+  technician       User?             @relation("MaintenanceTechnician", fields: [technicianId], references: [id])
+  issueDescription String
+  status           MaintenanceStatus @default(PENDING)
+  repairCost       Float?
+  resolutionNotes String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
