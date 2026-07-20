@@ -30,8 +30,11 @@ export const registerAsset = async (req, res) => {
       purchaseDate,
       cost,
       notes,
-      isBookable
+      isBookable,
+      imageUrl
     } = req.body;
+
+    let finalImageUrl = req.file?.path || imageUrl || null;
 
     if (!name || !serialNumber || !categoryId || !location) {
       return res.status(400).json({ error: 'Name, serial number, category, and location are required' });
@@ -96,6 +99,7 @@ export const registerAsset = async (req, res) => {
           purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
           cost: cost ? parseFloat(cost) : null,
           notes: notes || null,
+          imageUrl: finalImageUrl,
           isBookable: isBookable !== undefined ? Boolean(isBookable) : false,
           status: 'AVAILABLE'
         },
@@ -216,7 +220,8 @@ export const updateAsset = async (req, res) => {
       purchaseDate,
       cost,
       notes,
-      isBookable
+      isBookable,
+      imageUrl
     } = req.body;
 
     const asset = await prisma.asset.findUnique({
@@ -225,6 +230,8 @@ export const updateAsset = async (req, res) => {
     if (!asset) {
       return res.status(404).json({ error: 'Asset not found' });
     }
+
+    let finalImageUrl = req.file?.path || (imageUrl !== undefined ? imageUrl : asset.imageUrl);
 
     // Validate Category if changing
     if (categoryId && categoryId !== asset.categoryId) {
@@ -258,6 +265,7 @@ export const updateAsset = async (req, res) => {
           purchaseDate: purchaseDate !== undefined ? (purchaseDate ? new Date(purchaseDate) : null) : asset.purchaseDate,
           cost: cost !== undefined ? (cost ? parseFloat(cost) : null) : asset.cost,
           notes: notes !== undefined ? notes : asset.notes,
+          imageUrl: finalImageUrl,
           isBookable: isBookable !== undefined ? Boolean(isBookable) : asset.isBookable
         },
         include: {

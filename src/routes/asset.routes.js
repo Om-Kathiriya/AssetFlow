@@ -7,6 +7,7 @@ import {
   changeAssetStatus
 } from '../controllers/asset.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { uploadSingleImage } from '../middleware/upload.js';
 
 const router = Router();
 
@@ -14,11 +15,11 @@ const router = Router();
 router.get('/', requireAuth, getAssets);
 router.get('/:id', requireAuth, getAssetById);
 
-// Admin-only register route
-router.post('/', requireAuth, requireRole('ADMIN'), registerAsset);
+// Admin-only register route (supports image upload field 'image')
+router.post('/', requireAuth, requireRole('ADMIN'), uploadSingleImage, registerAsset);
 
-// Admin / Asset Manager write routes
-router.put('/:id', requireAuth, requireRole('ADMIN', 'ASSET_MANAGER'), updateAsset);
+// Admin / Asset Manager write routes (supports image upload field 'image')
+router.put('/:id', requireAuth, requireRole('ADMIN', 'ASSET_MANAGER'), uploadSingleImage, updateAsset);
 router.patch('/:id/status', requireAuth, requireRole('ADMIN', 'ASSET_MANAGER'), changeAssetStatus);
 
 export default router;

@@ -135,6 +135,7 @@ model Asset {
   purchaseDate           DateTime?
   cost                   Float?
   notes                  String?
+  imageUrl               String?
   isBookable             Boolean                 @default(false)
   history                AssetHistory[]
   allocations            Allocation[]
