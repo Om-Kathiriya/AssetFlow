@@ -1,5 +1,47 @@
 import prisma from '../config/conn.js';
 
+// Get list of all allocations with background overdue sweep
+export const getAllocations = async (req, res) => {
+  try {
+    const { status, assetId, userId } = req.query;
+    const now = new Date();
+
+    // Background sweep: Mark late active allocations as OVERDUE
+    await prisma.allocation.updateMany({
+      where: {
+        status: 'ACTIVE',
+        expectedReturnDate: { lt: now }
+      },
+      data: {
+        status: 'OVERDUE'
+      }
+    });
+
+    const where = {};
+    if (status) where.status = status.toUpperCase();
+    if (assetId) where.assetId = assetId;
+    if (userId) where.userId = userId;
+
+    const allocations = await prisma.allocation.findMany({
+      where,
+      include: {
+        asset: {
+          select: { id: true, assetTag: true, name: true, status: true, imageUrl: true }
+        },
+        user: {
+          select: { id: true, name: true, email: true, username: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return res.status(200).json({ allocations });
+  } catch (error) {
+    console.error('Get allocations error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Create a new Asset Allocation
 export const allocateAsset = async (req, res) => {
   try {

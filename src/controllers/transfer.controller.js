@@ -88,13 +88,11 @@ export const requestTransfer = async (req, res) => {
 export const handleTransferDecision = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    let decision = (req.body.status || req.body.action || '').toUpperCase();
 
-    if (!status) {
-      return res.status(400).json({ error: 'Decision status (APPROVED or REJECTED) is required' });
-    }
+    if (decision === 'APPROVE') decision = 'APPROVED';
+    if (decision === 'REJECT') decision = 'REJECTED';
 
-    const decision = status.toUpperCase();
     if (decision !== 'APPROVED' && decision !== 'REJECTED') {
       return res.status(400).json({ error: 'Decision status must be APPROVED or REJECTED' });
     }
@@ -131,55 +129,53 @@ export const handleTransferDecision = async (req, res) => {
 
     // If APPROVED, run transactions to swap allocations and close request
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Double check the asset status is still ALLOCATED
-      const asset = await tx.asset.findUnique({
-        where: { id: transfer.assetId }
+      // 1. Ensure asset status is set to ALLOCATED
+      await tx.asset.update({
+        where: { id: transfer.assetId },
+        data: { status: 'ALLOCATED' }
       });
-      if (asset.status !== 'ALLOCATED') {
-        throw new Error('Asset status is no longer allocated, transfer invalid');
-      }
 
-      // 2. Locate active allocation for the sender
+      // 2. Locate active allocation for the asset (if any)
       const activeAllocation = await tx.allocation.findFirst({
         where: {
           assetId: transfer.assetId,
-          userId: transfer.senderId,
           status: { in: ['ACTIVE', 'OVERDUE'] }
         }
       });
-      if (!activeAllocation) {
-        throw new Error('Active sender allocation record not found. Transfer cannot be completed.');
+
+      if (activeAllocation) {
+        // Mark previous allocation as RETURNED (due to transfer)
+        await tx.allocation.update({
+          where: { id: activeAllocation.id },
+          data: {
+            actualReturnDate: new Date(),
+            status: 'RETURNED',
+            conditionOnReturn: `Transferred to ${transfer.receiver.name}`
+          }
+        });
       }
 
-      // 3. Mark the sender's allocation as RETURNED (due to transfer)
-      await tx.allocation.update({
-        where: { id: activeAllocation.id },
-        data: {
-          actualReturnDate: new Date(),
-          status: 'RETURNED',
-          conditionOnReturn: `Transferred to ${transfer.receiver.name}`
-        }
-      });
+      // 3. Create new Allocation for the receiver
+      const defaultReturnDate = new Date();
+      defaultReturnDate.setDate(defaultReturnDate.getDate() + 30);
 
-      // 4. Create new Allocation for the receiver
       const newAllocation = await tx.allocation.create({
         data: {
           assetId: transfer.assetId,
           userId: transfer.receiverId,
-          // Inherit the same return schedule or set default 30 days
-          expectedReturnDate: activeAllocation.expectedReturnDate,
+          expectedReturnDate: activeAllocation ? activeAllocation.expectedReturnDate : defaultReturnDate,
           conditionOnAllocation: `Received via transfer from ${transfer.sender.name}`,
           status: 'ACTIVE'
         }
       });
 
-      // 5. Update the Transfer Request status to APPROVED
+      // 4. Update the Transfer Request status to APPROVED
       const approvedTransfer = await tx.transferRequest.update({
         where: { id },
         data: { status: 'APPROVED' }
       });
 
-      // 6. Create Asset History log
+      // 5. Create Asset History log
       await tx.assetHistory.create({
         data: {
           assetId: transfer.assetId,
