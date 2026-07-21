@@ -13,6 +13,7 @@ router.get('/', requireAuth, getEmployees);
 
 // Admin-only write routes
 router.patch('/:id/role', requireAuth, requireRole('ADMIN'), promoteEmployeeRole);
+router.put('/:id/role', requireAuth, requireRole('ADMIN'), promoteEmployeeRole);
 router.get('/:id/role-logs', requireAuth, requireRole('ADMIN'), getEmployeeRoleLogs);
 
 export default router;

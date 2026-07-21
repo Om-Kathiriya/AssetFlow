@@ -33,7 +33,7 @@ export const getEmployees = async (req, res) => {
 export const promoteEmployeeRole = async (req, res) => {
   try {
     const { id } = req.params;
-    const { role } = req.body;
+    const role = req.body.role || req.body.newRole;
 
     if (!role) {
       return res.status(400).json({ error: 'Role is required' });
