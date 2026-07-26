@@ -1,0 +1,258 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  ASSET_MANAGER
+  EMPLOYEE
+  TECHNICIAN
+}
+
+enum AssetStatus {
+  AVAILABLE
+  ALLOCATED
+  RESERVED
+  UNDER_MAINTENANCE
+  LOST
+  RETIRED
+  DISPOSED
+}
+
+enum AllocationStatus {
+  ACTIVE
+  RETURNED
+  OVERDUE
+}
+
+enum TransferStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BookingStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum MaintenanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum AuditSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum VerificationResult {
+  PENDING
+  VERIFIED
+  MISSING
+  DISCREPANCY
+}
+
+model User {
+  id                    String                 @id @default(uuid())
+  email                 String                 @unique
+  username              String                 @unique
+  password              String
+  name                  String
+  role                  Role                   @default(EMPLOYEE)
+  departmentId          String?
+  department            Department?            @relation("UserDept", fields: [departmentId], references: [id])
+  managedDepartments    Department[]           @relation("DeptManager")
+  roleChanges           RoleChangeLog[]        @relation("RoleChangeUser")
+  executedRoleChanges   RoleChangeLog[]        @relation("RoleChangeExecutor")
+  assetHistory          AssetHistory[]
+  allocations           Allocation[]
+  sentTransfers         TransferRequest[]      @relation("Sender")
+  receivedTransfers     TransferRequest[]      @relation("Receiver")
+  bookings              Booking[]
+  reportedMaintenance   MaintenanceRequest[]   @relation("MaintenanceReporter")
+  assignedMaintenance   MaintenanceRequest[]   @relation("MaintenanceTechnician")
+  systemAuditLogs       AuditLog[]
+  createdAuditSessions  PhysicalAuditSession[]
+  verifiedAuditItems    AuditVerificationItem[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+}
+
+model Department {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  isActive  Boolean      @default(true)
+  parentId  String?
+  parent    Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
+  children  Department[] @relation("DeptHierarchy")
+  managerId String?
+  manager   User?        @relation("DeptManager", fields: [managerId], references: [id])
+  users     User[]       @relation("UserDept")
+  assets    Asset[]
+}
+
+model Category {
+  id             String   @id @default(uuid())
+  name           String   @unique
+  isActive       Boolean  @default(true)
+  warrantyPeriod Int?     // In months
+  assets         Asset[]
+}
+
+model RoleChangeLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation("RoleChangeUser", fields: [userId], references: [id])
+  oldRole     Role
+  newRole     Role
+  changedById String
+  changedBy   User     @relation("RoleChangeExecutor", fields: [changedById], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Asset {
+  id                     String                  @id @default(uuid())
+  assetTag               String                  @unique
+  name                   String
+  serialNumber           String                  @unique
+  status                 AssetStatus             @default(AVAILABLE)
+  categoryId             String
+  category               Category                @relation(fields: [categoryId], references: [id])
+  departmentId           String?
+  department             Department?             @relation(fields: [departmentId], references: [id])
+  location               String
+  purchaseDate           DateTime?
+  cost                   Float?
+  notes                  String?
+  imageUrl               String?
+  isBookable             Boolean                 @default(false)
+  history                AssetHistory[]
+  allocations            Allocation[]
+  transfers              TransferRequest[]
+  bookings               Booking[]
+  maintenanceRequests    MaintenanceRequest[]
+  auditVerificationItems AuditVerificationItem[]
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+}
+
+model AssetHistory {
+  id          String       @id @default(uuid())
+  assetId     String
+  asset       Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  action      String       // e.g. "REGISTER", "STATUS_CHANGE", "UPDATE"
+  oldStatus   AssetStatus?
+  newStatus   AssetStatus
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  notes       String?
+  createdAt   DateTime     @default(now())
+}
+
+model Allocation {
+  id                    String           @id @default(uuid())
+  assetId               String
+  asset                 Asset            @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User             @relation(fields: [userId], references: [id])
+  allocatedDate         DateTime         @default(now())
+  expectedReturnDate    DateTime
+  actualReturnDate      DateTime?
+  status                AllocationStatus @default(ACTIVE)
+  conditionOnAllocation String?
+  conditionOnReturn     String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+}
+
+model TransferRequest {
+  id         String         @id @default(uuid())
+  assetId    String
+  asset      Asset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User           @relation("Sender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User           @relation("Receiver", fields: [receiverId], references: [id])
+  status     TransferStatus @default(PENDING)
+  notes      String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model Booking {
+  id        String        @id @default(uuid())
+  assetId   String
+  asset     Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  startTime DateTime
+  endTime   DateTime
+  status    BookingStatus @default(UPCOMING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model MaintenanceRequest {
+  id               String            @id @default(uuid())
+  assetId          String
+  asset            Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  reporterId       String
+  reporter         User              @relation("MaintenanceReporter", fields: [reporterId], references: [id])
+  technicianId     String?
+  technician       User?             @relation("MaintenanceTechnician", fields: [technicianId], references: [id])
+  issueDescription String
+  status           MaintenanceStatus @default(PENDING)
+  repairCost       Float?
+  resolutionNotes String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorId      String
+  actor        User     @relation(fields: [actorId], references: [id])
+  action       String   // e.g. "CREATE_ASSET", "ROLE_CHANGE", "DELETE_DEPARTMENT"
+  targetEntity String   // e.g. "Asset", "User", "Department"
+  targetId     String?
+  details      String?  // JSON diff or descriptive notes
+  createdAt    DateTime @default(now())
+}
+
+model PhysicalAuditSession {
+  id          String                  @id @default(uuid())
+  sessionName String
+  location    String?
+  status      AuditSessionStatus      @default(IN_PROGRESS)
+  createdById String
+  createdBy   User                    @relation(fields: [createdById], references: [id])
+  items       AuditVerificationItem[]
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+}
+
+model AuditVerificationItem {
+  id           String               @id @default(uuid())
+  sessionId    String
+  session      PhysicalAuditSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  assetId      String
+  asset        Asset                @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  result       VerificationResult   @default(PENDING)
+  notes        String?
+  verifiedById String?
+  verifiedBy   User?                @relation(fields: [verifiedById], references: [id])
+  verifiedAt   DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
