@@ -6,6 +6,7 @@ import { AppLayout } from './components/AppLayout';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { DashboardOverview } from './pages/DashboardOverview';
+import { OrganizationSetup } from './pages/OrganizationSetup';
 
 function App() {
   return (
@@ -27,8 +28,17 @@ function App() {
           >
             <Route index element={<DashboardOverview />} />
             
+            {/* Organization Setup Module (Phase 1) */}
+            <Route
+              path="organization"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'ASSET_MANAGER']}>
+                  <OrganizationSetup />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Placeholder routes for upcoming phases */}
-            <Route path="organization" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Organization Setup Screen (Phase 1)</h3></div>} />
             <Route path="assets" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Asset Directory Screen (Phase 2)</h3></div>} />
             <Route path="allocations" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Allocations & Transfers Screen (Phase 3)</h3></div>} />
             <Route path="bookings" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Resource Bookings Screen (Phase 4)</h3></div>} />
