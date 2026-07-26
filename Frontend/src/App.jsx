@@ -7,6 +7,8 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { DashboardOverview } from './pages/DashboardOverview';
 import { OrganizationSetup } from './pages/OrganizationSetup';
+import { AssetDirectory } from './pages/AssetDirectory';
+import { AllocationsTransfers } from './pages/AllocationsTransfers';
 
 function App() {
   return (
@@ -38,9 +40,13 @@ function App() {
               }
             />
 
+            {/* Asset Directory Module (Phase 2) */}
+            <Route path="assets" element={<AssetDirectory />} />
+
+            {/* Allocations & Transfers Module (Phase 3) */}
+            <Route path="allocations" element={<AllocationsTransfers />} />
+
             {/* Placeholder routes for upcoming phases */}
-            <Route path="assets" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Asset Directory Screen (Phase 2)</h3></div>} />
-            <Route path="allocations" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Allocations & Transfers Screen (Phase 3)</h3></div>} />
             <Route path="bookings" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Resource Bookings Screen (Phase 4)</h3></div>} />
             <Route path="maintenance" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Maintenance Kanban Screen (Phase 5)</h3></div>} />
             <Route path="audits" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Audits & Compliance Screen (Phase 6)</h3></div>} />
