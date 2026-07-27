@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Mail, User, Eye, EyeOff, ArrowRight, Shield } from 'lucide-react';
+import { Lock, Mail, User, Eye, EyeOff, ArrowRight, Shield, CheckCircle2 } from 'lucide-react';
 
 export const Login = () => {
+  const location = useLocation();
   const [identifier, setIdentifier] = useState(''); // Email or Username
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState(location.state?.message || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { login } = useAuth();
@@ -78,6 +80,12 @@ export const Login = () => {
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.375rem' }}>Log in to your account</h2>
             <p style={{ fontSize: '0.875rem', color: '#64748B' }}>Enter your credentials to access your dashboard</p>
           </div>
+
+          {successMessage && (
+            <div className="alert alert-success" style={{ marginBottom: '1.5rem', backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', padding: '0.75rem 1rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+              <CheckCircle2 size={16} /> {successMessage}
+            </div>
+          )}
 
           {error && (
             <div className="alert alert-danger" style={{ marginBottom: '1.5rem' }}>

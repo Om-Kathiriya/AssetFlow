@@ -148,6 +148,28 @@ export const returnAsset = async (req, res) => {
   }
 };
 
+// Get all allocations list
+export const getAllocations = async (req, res) => {
+  try {
+    const allocations = await prisma.allocation.findMany({
+      include: {
+        asset: {
+          select: { id: true, assetTag: true, name: true }
+        },
+        user: {
+          select: { id: true, name: true, email: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return res.status(200).json({ allocations });
+  } catch (error) {
+    console.error('Get allocations error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Get list of overdue allocations
 export const getOverdueAllocations = async (req, res) => {
   try {

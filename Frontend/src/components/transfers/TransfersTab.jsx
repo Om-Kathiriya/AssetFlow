@@ -45,9 +45,8 @@ export const TransfersTab = () => {
   const handleDecision = async (transferId, action) => {
     try {
       setActionLoadingId(transferId);
-      await api.post(`/transfers/${transferId}/decision`, {
-        status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-        action
+      await api.patch(`/transfers/${transferId}/status`, {
+        status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED'
       });
       fetchData();
     } catch (err) {

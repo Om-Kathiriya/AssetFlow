@@ -12,16 +12,28 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem('assetflow_token');
-      const storedUser = localStorage.getItem('assetflow_user');
 
-      if (storedToken && storedUser) {
+      if (storedToken) {
         try {
-          setUser(JSON.parse(storedUser));
-          setToken(storedToken);
+          const response = await api.get('/auth/me');
+          if (response.data && response.data.user) {
+            setUser(response.data.user);
+            setToken(storedToken);
+            localStorage.setItem('assetflow_user', JSON.stringify(response.data.user));
+          } else {
+            throw new Error('Invalid user profile');
+          }
         } catch (e) {
           localStorage.removeItem('assetflow_token');
           localStorage.removeItem('assetflow_user');
+          setToken(null);
+          setUser(null);
         }
+      } else {
+        localStorage.removeItem('assetflow_token');
+        localStorage.removeItem('assetflow_user');
+        setToken(null);
+        setUser(null);
       }
       setLoading(false);
     };
@@ -42,17 +54,10 @@ export const AuthProvider = ({ children }) => {
     return newUser;
   };
 
-  // Signup handler
+  // Signup handler (registers user without auto-logging in)
   const signup = async (userData) => {
     const response = await api.post('/auth/signup', userData);
-    const { token: newToken, user: newUser } = response.data;
-
-    localStorage.setItem('assetflow_token', newToken);
-    localStorage.setItem('assetflow_user', JSON.stringify(newUser));
-
-    setToken(newToken);
-    setUser(newUser);
-    return newUser;
+    return response.data;
   };
 
   // Logout handler

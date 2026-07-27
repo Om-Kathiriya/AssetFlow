@@ -48,7 +48,9 @@ export const Signup = () => {
     try {
       setIsSubmitting(true);
       await signup(formData);
-      navigate('/');
+      navigate('/login', {
+        state: { message: 'Account created successfully! Please sign in with your credentials.' }
+      });
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
