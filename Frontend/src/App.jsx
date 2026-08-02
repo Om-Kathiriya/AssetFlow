@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/AppLayout';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
+import { OTPVerification } from './pages/OTPVerification';
 import { DashboardOverview } from './pages/DashboardOverview';
 import { OrganizationSetup } from './pages/OrganizationSetup';
 import { AssetDirectory } from './pages/AssetDirectory';
@@ -22,6 +23,7 @@ function App() {
           {/* Public Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/verify-otp" element={<OTPVerification />} />
 
           {/* Protected Application Layout Routes */}
           <Route

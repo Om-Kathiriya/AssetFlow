@@ -1,4 +1,5 @@
 import prisma from '../config/conn.js';
+import { sendAllocationEmail } from '../services/email.service.js';
 
 // Create a new Asset Allocation
 export const allocateAsset = async (req, res) => {
@@ -72,6 +73,18 @@ export const allocateAsset = async (req, res) => {
 
       return allocation;
     });
+
+    // Send async Allocation Email Receipt
+    try {
+      await sendAllocationEmail(
+        result.user.email,
+        result.asset.name,
+        result.asset.assetTag,
+        result.expectedReturnDate
+      );
+    } catch (emailErr) {
+      console.error('Failed to send allocation receipt email:', emailErr);
+    }
 
     return res.status(201).json({
       message: 'Asset allocated successfully',

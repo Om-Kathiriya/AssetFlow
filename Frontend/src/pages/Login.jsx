@@ -29,6 +29,15 @@ export const Login = () => {
       await login({ email: identifier, password });
       navigate('/');
     } catch (err) {
+      if (err.response?.data?.requiresVerification) {
+        navigate('/verify-otp', {
+          state: {
+            email: err.response.data.email || formData.email,
+            message: err.response.data.error || 'Please verify your email address to log in.'
+          }
+        });
+        return;
+      }
       setError(err.response?.data?.error || 'Failed to authenticate. Please check your credentials.');
     } finally {
       setIsSubmitting(false);

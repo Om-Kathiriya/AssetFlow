@@ -47,9 +47,9 @@ export const Signup = () => {
 
     try {
       setIsSubmitting(true);
-      await signup(formData);
-      navigate('/login', {
-        state: { message: 'Account created successfully! Please sign in with your credentials.' }
+      const res = await signup(formData);
+      navigate('/verify-otp', {
+        state: { email: formData.email, message: res.message || 'Verification code sent to your email.' }
       });
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');

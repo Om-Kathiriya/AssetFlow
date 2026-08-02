@@ -22,12 +22,22 @@ const sendMail = async ({ to, subject, html, text }) => {
 
   if (transporter) {
     try {
+      const fromEmail = process.env.SMTP_USER || process.env.SMTP_FROM_EMAIL || 'no-reply@assetflow.com';
+      const fromName = process.env.SMTP_FROM_NAME || 'AssetFlow Security';
+
       const info = await transporter.sendMail({
-        from: `"${process.env.SMTP_FROM_NAME || 'AssetFlow Support'}" <${process.env.SMTP_FROM_EMAIL || 'no-reply@assetflow.com'}>`,
+        from: `"${fromName}" <${fromEmail}>`,
+        replyTo: fromEmail,
         to,
         subject,
         text,
-        html
+        html,
+        headers: {
+          'X-Mailer': 'AssetFlow Enterprise Mailer',
+          'X-Priority': '1 (Highest)',
+          'X-MSMail-Priority': 'High',
+          'Importance': 'High'
+        }
       });
       console.log(`[EMAIL SENT] MessageId: ${info.messageId} to ${to}`);
       return { success: true, messageId: info.messageId };
@@ -51,7 +61,7 @@ const sendMail = async ({ to, subject, html, text }) => {
 export const sendAllocationEmail = async ({ to, userName, assetName, assetTag, expectedReturnDate }) => {
   const subject = `Asset Allocated: ${assetName} (${assetTag})`;
   const text = `Hello ${userName},\n\nThe asset "${assetName}" [Tag: ${assetTag}] has been allocated to you.\nExpected Return Date: ${new Date(expectedReturnDate).toLocaleDateString()}\n\nThank you,\nAssetFlow Team`;
-  
+
   const html = `
     <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
       <h2 style="color: #2563eb;">Asset Flow — Allocation Receipt</h2>
@@ -115,4 +125,37 @@ export const sendMaintenanceUpdateEmail = async ({ to, userName, assetName, stat
   `;
 
   return await sendMail({ to, subject, html, text });
+};
+
+// Send Signup OTP Verification Email
+export const sendOTPEmail = async (email, otpCode, name = 'User') => {
+  const subject = `AssetFlow Verification Code`;
+  const text = `Hello ${name},\n\nThank you for registering with AssetFlow.\nYour 6-digit OTP verification code is: ${otpCode}\nThis code expires in 15 minutes.\n\nBest regards,\nAssetFlow Support`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #E2E8F0; border-radius: 8px; background-color: #FFFFFF;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="color: #4F46E5; margin: 0;">AssetFlow Enterprise</h2>
+        <p style="color: #64748B; font-size: 0.875rem; margin-top: 4px;">Account Security Verification</p>
+      </div>
+      
+      <p style="font-size: 1rem; color: #1E293B;">Hello <strong>${name}</strong>,</p>
+      <p style="font-size: 0.875rem; color: #475569; line-height: 1.5;">
+        Thank you for registering with AssetFlow. Please use the 6-digit verification code below to verify your email address:
+      </p>
+
+      <div style="text-align: center; margin: 25px 0;">
+        <span style="display: inline-block; font-size: 2.25rem; font-weight: 800; letter-spacing: 8px; color: #4F46E5; background-color: #EEF2FF; padding: 14px 32px; border-radius: 8px; border: 1px dashed #C7D2FE;">
+          ${otpCode}
+        </span>
+        <p style="font-size: 0.75rem; color: #94A3B8; margin-top: 8px;">Code expires in 15 minutes.</p>
+      </div>
+
+      <p style="font-size: 0.8125rem; color: #94A3B8; border-top: 1px solid #E2E8F0; padding-top: 15px; margin-top: 25px;">
+        If you did not request this code, please ignore this email.
+      </p>
+    </div>
+  `;
+
+  return await sendMail({ to: email, subject, html, text });
 };

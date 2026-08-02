@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { signup, login, forgotPassword } from '../controllers/auth.controller.js';
+import { signup, login, verifyOTP, resendOTP, forgotPassword } from '../controllers/auth.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = Router();
@@ -7,6 +7,8 @@ const router = Router();
 // Public routes
 router.post('/signup', signup);
 router.post('/login', login);
+router.post('/verify-otp', verifyOTP);
+router.post('/resend-otp', resendOTP);
 router.post('/forgot-password', forgotPassword);
 
 // Protected routes (for verification)

@@ -54,9 +54,21 @@ export const AuthProvider = ({ children }) => {
     return newUser;
   };
 
-  // Signup handler (registers user without auto-logging in)
+  // Signup handler (registers user and requires OTP)
   const signup = async (userData) => {
     const response = await api.post('/auth/signup', userData);
+    return response.data;
+  };
+
+  // Verify OTP Code handler
+  const verifyOTP = async (email, otp) => {
+    const response = await api.post('/auth/verify-otp', { email, otp });
+    return response.data;
+  };
+
+  // Resend OTP Code handler
+  const resendOTP = async (email) => {
+    const response = await api.post('/auth/resend-otp', { email });
     return response.data;
   };
 
@@ -76,6 +88,8 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         signup,
+        verifyOTP,
+        resendOTP,
         logout,
         isAuthenticated: !!token && !!user
       }}
