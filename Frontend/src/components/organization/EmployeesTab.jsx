@@ -48,6 +48,7 @@ export const EmployeesTab = () => {
   };
 
   const filteredEmployees = employees.filter(emp => {
+    if (emp.role === 'ADMIN') return false;
     const term = search.toLowerCase();
     const matchesSearch =
       emp.name.toLowerCase().includes(term) ||
@@ -75,7 +76,6 @@ export const EmployeesTab = () => {
 
           <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} style={{ width: '160px' }}>
             <option value="ALL">All Roles</option>
-            <option value="ADMIN">ADMIN</option>
             <option value="ASSET_MANAGER">ASSET_MANAGER</option>
             <option value="TECHNICIAN">TECHNICIAN</option>
             <option value="EMPLOYEE">EMPLOYEE</option>
@@ -145,13 +145,19 @@ export const EmployeesTab = () => {
                   </td>
                   {currentUser?.role === 'ADMIN' && (
                     <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => handleOpenPromote(emp)}
-                        style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }}
-                      >
-                        <Shield size={14} /> Promote Role
-                      </button>
+                      {emp.id === currentUser?.id ? (
+                        <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontStyle: 'italic' }}>
+                          Current User
+                        </span>
+                      ) : (
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => handleOpenPromote(emp)}
+                          style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }}
+                        >
+                          <Shield size={14} /> Promote Role
+                        </button>
+                      )}
                     </td>
                   )}
                 </tr>

@@ -3,7 +3,7 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { RegisterAssetModal } from '../components/assets/RegisterAssetModal';
 import { AssetDetailModal } from '../components/assets/AssetDetailModal';
-import { Plus, Search, Boxes, Eye, ShieldAlert, Image as ImageIcon } from 'lucide-react';
+import { Plus, Search, Boxes, Eye, ShieldAlert, Image as ImageIcon, Trash2 } from 'lucide-react';
 
 export const AssetDirectory = () => {
   const { user } = useAuth();
@@ -46,7 +46,7 @@ export const AssetDirectory = () => {
       setDepartments(deptRes.data.departments || []);
       setError('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to fetch asset inventory');
+      setError(err.response?.data?.error || 'Failed to load asset directory');
     } finally {
       setLoading(false);
     }
@@ -59,6 +59,26 @@ export const AssetDirectory = () => {
   const handleOpenDetails = (assetId) => {
     setSelectedAssetId(assetId);
     setIsDetailModalOpen(true);
+  };
+
+  const handleDeleteAsset = async (asset) => {
+    if (!window.confirm(`Are you sure you want to permanently delete asset ${asset.assetTag} (${asset.name})? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await api.delete(`/assets/${asset.id}`);
+      fetchAssets();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete asset');
+    }
+  };
+
+  const getAssetImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+      return url;
+    }
+    return `http://localhost:8000${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   const getStatusBadgeStyle = (status) => {
@@ -176,7 +196,7 @@ export const AssetDirectory = () => {
                   <td style={{ padding: '0.75rem 1rem' }}>
                     <div style={{ width: '36px', height: '36px', borderRadius: '4px', border: '1px solid #E2E8F0', overflow: 'hidden', backgroundColor: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {asset.imageUrl ? (
-                        <img src={asset.imageUrl} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={getAssetImageUrl(asset.imageUrl)} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <ImageIcon size={18} style={{ color: '#CBD5E1' }} />
                       )}

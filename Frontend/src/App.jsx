@@ -9,6 +9,10 @@ import { DashboardOverview } from './pages/DashboardOverview';
 import { OrganizationSetup } from './pages/OrganizationSetup';
 import { AssetDirectory } from './pages/AssetDirectory';
 import { AllocationsTransfers } from './pages/AllocationsTransfers';
+import { ResourceBookings } from './pages/ResourceBookings';
+import { MaintenanceOverview } from './pages/MaintenanceOverview';
+import { AuditsOverview } from './pages/AuditsOverview';
+import { ReportsOverview } from './pages/ReportsOverview';
 
 function App() {
   return (
@@ -46,11 +50,30 @@ function App() {
             {/* Allocations & Transfers Module (Phase 3) */}
             <Route path="allocations" element={<AllocationsTransfers />} />
 
-            {/* Placeholder routes for upcoming phases */}
-            <Route path="bookings" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Resource Bookings Screen (Phase 4)</h3></div>} />
-            <Route path="maintenance" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Maintenance Kanban Screen (Phase 5)</h3></div>} />
-            <Route path="audits" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Audits & Compliance Screen (Phase 6)</h3></div>} />
-            <Route path="reports" element={<div style={{ padding: '1rem', background: 'white', borderRadius: '8px', border: '1px solid #E2E8F0' }}><h3>Reports & Analytics Screen (Phase 7)</h3></div>} />
+            {/* Resource Bookings Module (Phase 4) */}
+            <Route path="bookings" element={<ResourceBookings />} />
+
+            {/* Maintenance Workflow Module (Phase 5) */}
+            <Route path="maintenance" element={<MaintenanceOverview />} />
+
+            {/* Audits & Compliance Module (Phase 6) */}
+            <Route
+              path="audits"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'ASSET_MANAGER']}>
+                  <AuditsOverview />
+                </ProtectedRoute>
+              }
+            />
+            {/* Reports & Executive Analytics Module (Phase 7) */}
+            <Route
+              path="reports"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'ASSET_MANAGER']}>
+                  <ReportsOverview />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
           {/* Fallback redirect */}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { DepartmentModal } from './DepartmentModal';
-import { Plus, Search, Building2, Edit2, ShieldAlert } from 'lucide-react';
+import { Plus, Search, Building2, Edit2, ShieldAlert, Trash2, AlertTriangle } from 'lucide-react';
 
 export const DepartmentsTab = () => {
   const [departments, setDepartments] = useState([]);
@@ -13,6 +13,10 @@ export const DepartmentsTab = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [departmentToEdit, setDepartmentToEdit] = useState(null);
+
+  // Custom Delete Confirmation Modal State
+  const [deptToDelete, setDeptToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -43,6 +47,20 @@ export const DepartmentsTab = () => {
   const handleOpenEdit = (dept) => {
     setDepartmentToEdit(dept);
     setIsModalOpen(true);
+  };
+
+  const confirmDeleteDepartment = async () => {
+    if (!deptToDelete) return;
+    try {
+      setIsDeleting(true);
+      await api.delete(`/departments/${deptToDelete.id}`);
+      setDeptToDelete(null);
+      fetchData();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete department');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredDepartments = departments.filter(d => {
@@ -151,13 +169,24 @@ export const DepartmentsTab = () => {
                     </span>
                   </td>
                   <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => handleOpenEdit(dept)}
-                      style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }}
-                    >
-                      <Edit2 size={14} /> Edit
-                    </button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.375rem' }}>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => handleOpenEdit(dept)}
+                        style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }}
+                      >
+                        <Edit2 size={14} /> Edit
+                      </button>
+
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => setDeptToDelete(dept)}
+                        title="Delete Department"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', backgroundColor: '#FEF2F2', color: '#DC2626', borderColor: '#FCA5A5' }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -174,6 +203,47 @@ export const DepartmentsTab = () => {
         allDepartments={departments}
         allEmployees={employees}
       />
+
+      {/* Custom Centered Department Delete Confirmation Modal */}
+      {deptToDelete && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 120, padding: '1rem' }}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '10px', border: '1px solid #E2E8F0', width: '100%', maxWidth: '440px', padding: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+              <AlertTriangle size={24} />
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                Confirm Department Deletion
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                Are you sure you want to delete department <strong style={{ color: 'var(--accent-primary)' }}>'{deptToDelete.name}'</strong>?
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setDeptToDelete(null)}
+                disabled={isDeleting}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={confirmDeleteDepartment}
+                disabled={isDeleting}
+                style={{ flex: 1, backgroundColor: '#c70e0eff', borderColor: '#c70e0eff' }}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Department'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

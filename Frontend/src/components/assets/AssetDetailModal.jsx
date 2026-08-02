@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
-import { X, Boxes, Calendar, MapPin, DollarSign, RefreshCw, History, FileText, CheckCircle } from 'lucide-react';
+import { X, Boxes, Calendar, MapPin, DollarSign, RefreshCw, History, FileText, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
 
 export const AssetDetailModal = ({ isOpen, onClose, onRefresh, assetId }) => {
   const { user } = useAuth();
@@ -15,6 +15,10 @@ export const AssetDetailModal = ({ isOpen, onClose, onRefresh, assetId }) => {
   const [statusNotes, setStatusNotes] = useState('');
   const [statusError, setStatusError] = useState('');
   const [isChangingStatus, setIsChangingStatus] = useState(false);
+
+  // Custom Delete Confirmation Modal State
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchAssetDetails = async () => {
     if (!assetId) return;
@@ -34,10 +38,26 @@ export const AssetDetailModal = ({ isOpen, onClose, onRefresh, assetId }) => {
   useEffect(() => {
     if (isOpen && assetId) {
       fetchAssetDetails();
+      setShowConfirmDelete(false);
     }
   }, [isOpen, assetId]);
 
   if (!isOpen) return null;
+
+  const confirmDelete = async () => {
+    if (!asset) return;
+    try {
+      setIsDeleting(true);
+      await api.delete(`/assets/${asset.id}`);
+      setShowConfirmDelete(false);
+      onRefresh();
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete asset');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleStatusSubmit = async (e) => {
     e.preventDefault();
@@ -63,6 +83,14 @@ export const AssetDetailModal = ({ isOpen, onClose, onRefresh, assetId }) => {
     } finally {
       setIsChangingStatus(false);
     }
+  };
+
+  const getAssetImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+      return url;
+    }
+    return `http://localhost:8000${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   const getStatusBadgeStyle = (status) => {
@@ -93,9 +121,22 @@ export const AssetDetailModal = ({ isOpen, onClose, onRefresh, assetId }) => {
               </div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '0.25rem' }}>
-            <X size={20} />
-          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {['ADMIN', 'ASSET_MANAGER'].includes(user?.role) && asset && (
+              <button
+                onClick={() => setShowConfirmDelete(true)}
+                className="btn btn-danger"
+                style={{ fontSize: '0.8125rem', padding: '0.375rem 0.75rem', backgroundColor: '#FEF2F2', color: '#DC2626', borderColor: '#FCA5A5' }}
+              >
+                <Trash2 size={15} /> Delete Asset
+              </button>
+            )}
+
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '0.25rem' }}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body Scroll */}
@@ -111,7 +152,7 @@ export const AssetDetailModal = ({ isOpen, onClose, onRefresh, assetId }) => {
                 {/* Photo Preview */}
                 <div style={{ width: '140px', height: '140px', borderRadius: '8px', border: '1px solid #CBD5E1', backgroundColor: '#F8FAFC', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {asset?.imageUrl ? (
-                    <img src={asset.imageUrl} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={getAssetImageUrl(asset.imageUrl)} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <Boxes size={40} style={{ color: '#CBD5E1' }} />
                   )}
@@ -146,7 +187,7 @@ export const AssetDetailModal = ({ isOpen, onClose, onRefresh, assetId }) => {
                   <div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>COST / VALUATION</div>
                     <div style={{ fontSize: '0.875rem', fontWeight: 600, marginTop: '0.25rem' }}>
-                      {asset.cost ? `$${asset.cost.toFixed(2)}` : 'N/A'}
+                      {asset.cost ? `₹${asset.cost.toFixed(2)}` : 'N/A'}
                     </div>
                   </div>
 
@@ -235,6 +276,47 @@ export const AssetDetailModal = ({ isOpen, onClose, onRefresh, assetId }) => {
         </div>
 
       </div>
+
+      {/* Custom Centered Delete Confirmation Modal */}
+      {showConfirmDelete && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 120, padding: '1rem' }}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '10px', border: '1px solid #E2E8F0', width: '100%', maxWidth: '440px', padding: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+              <AlertTriangle size={24} />
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                Confirm Permanent Deletion
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                Are you sure you want to permanently delete asset <strong style={{ color: 'var(--accent-primary)' }}>{asset?.assetTag}</strong> ({asset?.name})? This action cannot be undone.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowConfirmDelete(false)}
+                disabled={isDeleting}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                style={{ flex: 1, backgroundColor: '#c70e0eff', borderColor: '#c70e0eff' }}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Asset'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

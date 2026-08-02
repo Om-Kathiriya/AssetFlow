@@ -5,7 +5,7 @@ import { Lock, Mail, User, Eye, EyeOff, ArrowRight, Shield, CheckCircle2 } from 
 
 export const Login = () => {
   const location = useLocation();
-  const [identifier, setIdentifier] = useState(''); // Email or Username
+  const [identifier, setIdentifier] = useState(location.state?.email || ''); // Pre-fill Email/Username if redirected
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');

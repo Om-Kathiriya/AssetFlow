@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { NotificationDrawer } from './notifications/NotificationDrawer';
 import {
   LayoutDashboard,
   Building2,
@@ -12,11 +13,13 @@ import {
   FileBarChart,
   LogOut,
   Shield,
-  User as UserIcon
+  User as UserIcon,
+  Bell
 } from 'lucide-react';
 
 export const AppLayout = () => {
   const { user, logout } = useAuth();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   // Navigation Items mapped to roles
   const navItems = [
@@ -47,24 +50,64 @@ export const AppLayout = () => {
       <aside
         style={{
           width: '240px',
+          height: '100vh',
+          position: 'sticky',
+          top: 0,
+          flexShrink: 0,
           backgroundColor: 'var(--bg-sidebar)',
           color: '#94A3B8',
           display: 'flex',
           flexDirection: 'column',
           justify: 'space-between',
-          borderRight: '1px solid #1E293B'
+          borderRight: '1px solid #1E293B',
+          zIndex: 40
         }}
       >
-        <div>
-          {/* Brand Logo Header */}
-          <div style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid #1E293B' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '1rem' }}>
-              AF
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
+          {/* Brand Logo Header with Notification Bell */}
+          <div style={{ padding: '1.25rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1E293B', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '1rem' }}>
+                AF
+              </div>
+              <div>
+                <div style={{ color: '#F8FAFC', fontWeight: 700, fontSize: '1rem', letterSpacing: '-0.02em' }}>AssetFlow</div>
+                <div style={{ fontSize: '0.75rem', color: '#64748B' }}>Enterprise AMS</div>
+              </div>
             </div>
-            <div>
-              <div style={{ color: '#F8FAFC', fontWeight: 700, fontSize: '1rem', letterSpacing: '-0.02em' }}>AssetFlow</div>
-              <div style={{ fontSize: '0.75rem', color: '#64748B' }}>Enterprise AMS</div>
-            </div>
+
+            {/* Notification Bell Button */}
+            <button
+              onClick={() => setIsNotificationOpen(true)}
+              title="Notification Center"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#94A3B8',
+                cursor: 'pointer',
+                padding: '0.375rem',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'center',
+                position: 'relative'
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.color = '#F8FAFC')}
+              onMouseOut={(e) => (e.currentTarget.style.color = '#94A3B8')}
+            >
+              <Bell size={18} />
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '4px',
+                  right: '4px',
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#EF4444'
+                }}
+              />
+            </button>
           </div>
 
           {/* Navigation Items */}
@@ -98,16 +141,16 @@ export const AppLayout = () => {
         </div>
 
         {/* User Badge & Logout Footer */}
-        <div style={{ padding: '1rem', borderTop: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F1F5F9' }}>
+        <div style={{ padding: '1rem', borderTop: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F1F5F9', flexShrink: 0 }}>
               <UserIcon size={18} />
             </div>
-            <div style={{ overflow: 'hidden' }}>
+            <div style={{ minWidth: 0 }}>
               <div style={{ color: '#F8FAFC', fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 {user?.name || user?.username}
               </div>
-              <span className={`badge ${getRoleBadgeClass(user?.role)}`} style={{ fontSize: '0.65rem', marginTop: '0.125rem' }}>
+              <span className={`badge ${getRoleBadgeClass(user?.role)}`} style={{ fontSize: '0.65rem', marginTop: '0.125rem', display: 'inline-block' }}>
                 {user?.role}
               </span>
             </div>
@@ -124,7 +167,8 @@ export const AppLayout = () => {
               padding: '0.5rem',
               borderRadius: '4px',
               display: 'flex',
-              alignItems: 'center'
+              alignItems: 'center',
+              flexShrink: 0
             }}
             onMouseOver={(e) => (e.currentTarget.style.color = '#F8FAFC')}
             onMouseOut={(e) => (e.currentTarget.style.color = '#94A3B8')}
@@ -136,33 +180,16 @@ export const AppLayout = () => {
 
       {/* Main Content Viewport */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* Header Bar */}
-        <header
-          style={{
-            height: '64px',
-            backgroundColor: 'var(--bg-card)',
-            borderBottom: '1px solid var(--border-subtle)',
-            display: 'flex',
-            alignItems: 'center',
-            justify: 'space-between',
-            padding: '0 2rem'
-          }}
-        >
-          <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            System Status: <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>Connected</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-              Logged in as <strong>{user?.email}</strong>
-            </span>
-          </div>
-        </header>
-
         {/* Dynamic Route Content Outlet */}
         <div style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
           <Outlet />
         </div>
+
+        {/* Notification Drawer */}
+        <NotificationDrawer
+          isOpen={isNotificationOpen}
+          onClose={() => setIsNotificationOpen(false)}
+        />
       </main>
     </div>
   );

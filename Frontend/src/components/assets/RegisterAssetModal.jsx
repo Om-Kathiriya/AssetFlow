@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { X, PackagePlus, Upload, Image as ImageIcon } from 'lucide-react';
 
@@ -18,6 +18,26 @@ export const RegisterAssetModal = ({ isOpen, onClose, onRefresh, categories = []
   const [imagePreview, setImagePreview] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reset all form inputs and photo preview when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        name: '',
+        serialNumber: '',
+        categoryId: '',
+        departmentId: '',
+        location: '',
+        purchaseDate: '',
+        cost: '',
+        notes: '',
+        isBookable: false
+      });
+      setImageFile(null);
+      setImagePreview('');
+      setError('');
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -64,6 +84,22 @@ export const RegisterAssetModal = ({ isOpen, onClose, onRefresh, categories = []
       await api.post('/assets', submitData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+
+      // Clear form on success
+      setFormData({
+        name: '',
+        serialNumber: '',
+        categoryId: '',
+        departmentId: '',
+        location: '',
+        purchaseDate: '',
+        cost: '',
+        notes: '',
+        isBookable: false
+      });
+      setImageFile(null);
+      setImagePreview('');
+      setError('');
 
       onRefresh();
       onClose();
@@ -159,7 +195,7 @@ export const RegisterAssetModal = ({ isOpen, onClose, onRefresh, categories = []
             </div>
 
             <div>
-              <label htmlFor="cost">Purchase Cost ($)</label>
+              <label htmlFor="cost">Purchase Cost (₹ INR)</label>
               <input
                 id="cost"
                 name="cost"
